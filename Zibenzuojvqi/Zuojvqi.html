@@ -1,0 +1,227 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <title>资本做局器</title>
+  <style>
+    body {
+      background: linear-gradient(to bottom, #b3d8f7, #eaf6ff);
+      height: 100vh;
+      margin: 0;
+      font-family: "微软雅黑", Arial, sans-serif;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .window {
+      width: 350px;
+      background: #f8fafd;
+      border: 2px solid #b2d1e6;
+      border-radius: 8px;
+      box-shadow: 0 4px 24px #0002;
+      position: relative;
+      padding-bottom: 20px;
+    }
+    .title-bar {
+      background: linear-gradient(to right, #b2d1e6, #eaf6ff);
+      height: 32px;
+      border-bottom: 1px solid #b2d1e6;
+      border-radius: 6px 6px 0 0;
+      display: flex;
+      align-items: center;
+      padding: 0 10px;
+      font-size: 15px;
+      color: #3a5a7a;
+      font-weight: bold;
+      user-select: none;
+    }
+    .close-btn {
+      position: absolute;
+      right: 10px;
+      top: 6px;
+      width: 20px;
+      height: 20px;
+      background: #eaf6ff;
+      border: 1px solid #b2d1e6;
+      border-radius: 3px;
+      color: #3a5a7a;
+      font-weight: bold;
+      cursor: pointer;
+      text-align: center;
+      line-height: 18px;
+      font-size: 16px;
+    }
+    .window-content {
+      padding: 20px 20px 0 20px;
+      text-align: center;
+    }
+    .window-content h1 {
+      margin: 10px 0 30px 0;
+      font-size: 28px;
+      color: #222;
+      font-weight: bold;
+      letter-spacing: 2px;
+    }
+    .btn-group {
+      display: flex;
+      justify-content: center;
+      gap: 30px;
+      margin-bottom: 30px;
+    }
+    .btn {
+      width: 100px;
+      height: 38px;
+      background: linear-gradient(to bottom, #5bb6e6, #3a8dc4);
+      border: none;
+      border-radius: 5px;
+      color: #fff;
+      font-size: 18px;
+      cursor: pointer;
+      box-shadow: 0 2px 6px #0001;
+      transition: background 0.2s;
+    }
+    .btn:disabled {
+      background: #b2d1e6;
+      color: #eee;
+      cursor: not-allowed;
+    }
+    .progress-bar-bg {
+      width: 90%;
+      height: 18px;
+      background: #eaf6ff;
+      border: 1.5px solid #b2d1e6;
+      border-radius: 8px;
+      margin: 0 auto;
+      margin-top: 10px;
+      overflow: hidden;
+    }
+    .progress-bar {
+      height: 100%;
+      width: 0;
+      background: linear-gradient(to right, #5bb6e6, #3a8dc4);
+      transition: width 0.2s;
+    }
+    /* 弹窗样式 */
+    .modal-mask {
+      position: fixed;
+      left: 0; top: 0; right: 0; bottom: 0;
+      background: #0005;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 100;
+    }
+    .modal {
+      background: #f8fafd;
+      border: 2px solid #b2d1e6;
+      border-radius: 8px;
+      width: 320px;
+      box-shadow: 0 4px 24px #0002;
+      padding: 20px 20px 10px 20px;
+      text-align: center;
+    }
+    .modal-title {
+      color: #3a5a7a;
+      font-weight: bold;
+      font-size: 16px;
+      margin-bottom: 18px;
+      text-align: left;
+    }
+    .modal-content {
+      color: #222;
+      font-size: 17px;
+      margin-bottom: 18px;
+      text-align: left;
+    }
+    .modal-btn {
+      width: 80px;
+      height: 32px;
+      background: linear-gradient(to bottom, #5bb6e6, #3a8dc4);
+      border: none;
+      border-radius: 5px;
+      color: #fff;
+      font-size: 16px;
+      cursor: pointer;
+      margin-top: 10px;
+    }
+  </style>
+</head>
+<body>
+  <div class="window" id="mainWindow">
+    <div class="title-bar">
+      资本做局器 
+      <span class="close-btn" onclick="closeWindow()">×</span>
+    </div>
+    <div class="window-content">
+      <h1>资本做局器</h1>
+      <div class="btn-group">
+        <button class="btn" id="startBtn" onclick="startGame()">开始做局</button>
+      </div>
+      <div id="progressTip" style="height:18px;line-height:18px;font-size:13px;color:#3a5a7a;margin-bottom:4px;text-align:left;width:90%;margin:0 auto 4px auto;"></div>
+      <div class="progress-bar-bg">
+        <div class="progress-bar" id="progressBar"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 弹窗 -->
+  <div class="modal-mask" id="modalMask" style="display:none;">
+    <div class="modal">
+      <div class="modal-title">信息：</div>
+      <div class="modal-content" id="modalContent">
+        做局成功，您的时间被资本浪费了10秒！
+      </div>
+      <button class="modal-btn" onclick="closeModal()">确定</button>
+    </div>
+  </div>
+
+  <script>
+    let timer = null;
+    function startGame() {
+      const startBtn = document.getElementById('startBtn');
+      const progressBar = document.getElementById('progressBar');
+      const progressTip = document.getElementById('progressTip');
+      startBtn.disabled = true;
+      progressBar.style.width = '0';
+      progressTip.textContent = '';
+      let duration = 10; // 秒
+      let elapsed = 0;
+      let interval = 100; // ms
+      timer = setInterval(() => {
+        elapsed += interval / 1000;
+        let percent = Math.min((elapsed / duration) * 100, 100);
+        progressBar.style.width = percent + '%';
+        if (elapsed <= 2) {
+          progressTip.textContent = '正在筹集资本......';
+        } else if (elapsed > 2 && elapsed <= 6) {
+          progressTip.textContent = '资本局正在初始化......';
+        } else if (elapsed > 6 && elapsed <= 10) {
+          progressTip.textContent = '马上就好了，请再等一下......';
+        }
+        if (percent >= 100) {
+          clearInterval(timer);
+          progressTip.textContent = '';
+          setTimeout(showModal, 200); // 稍微延迟弹窗
+        }
+      }, interval);
+    }
+
+    function showModal() {
+      document.getElementById('modalMask').style.display = 'flex';
+    }
+
+    function closeModal() {
+      document.getElementById('modalMask').style.display = 'none';
+      // 重置
+      document.getElementById('startBtn').disabled = false;
+      document.getElementById('progressBar').style.width = '0';
+      document.getElementById('progressTip').textContent = '';
+    }
+
+    function closeWindow() {
+      // 网页端无法真正关闭窗口，这里模拟隐藏
+      document.getElementById('mainWindow').style.display = 'none';
+    }
+  </script>
+</body>
+</html>
